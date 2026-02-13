@@ -20,6 +20,8 @@ class MainNode(Node, QtWidgets.QMainWindow):
         teleop_ui = os.path.join(package_path, 'ui', 'teleop_panel.ui')
         uic.loadUi(teleop_ui, self.teleop_window)
 
+        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+
         if hasattr(self, 'btn_open_teleop'):
             self.btn_open_teleop.clicked.connect(self.open_teleop)
 
