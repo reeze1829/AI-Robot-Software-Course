@@ -8,6 +8,7 @@ from PyQt5.QtCore import QTimer
 from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Odometry
 import math
+from std_srvs.srv import Empty
 
 class MainNode(Node, QtWidgets.QMainWindow):
     def __init__(self):
@@ -30,6 +31,8 @@ class MainNode(Node, QtWidgets.QMainWindow):
             10
         )
 
+        self.reset_client = self.create_client(Empty, '/reset_simulation')
+
         if hasattr(self, 'btn_open_teleop'):
             self.btn_open_teleop.clicked.connect(self.open_teleop)
 
@@ -38,6 +41,7 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.teleop_window.btn_left.clicked.connect(lambda: self.move_robot("left"))
         self.teleop_window.btn_right.clicked.connect(lambda: self.move_robot("right"))
         self.teleop_window.btn_stop.clicked.connect(lambda: self.move_robot("stop"))
+        self.btn_reset.clicked.connect(self.btn_reset_clicked)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.ros_spin)
@@ -90,6 +94,17 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.lbl_pos_x.setText(f"{msg.pose.pose.position.x:.2f}")
         self.lbl_pos_y.setText(f"{msg.pose.pose.position.y:.2f}")
         self.lbl_theta.setText(f"{curr_theta:.1f}")
+
+    def btn_reset_clicked(self):
+        self.get_logger().info("리셋 버튼 클릭됨!")
+        req = Empty.Request()
+
+        if self.reset_client.service_is_ready():
+            self.reset_client.call_async(req)
+            self.text_log.append("원점 복귀 명령 전송 완료!")
+        else:
+            self.get_logger().error("서비스가 준비되지 않았습니다.")
+            self.text_log.append("오류: 서비스 연결 실패")
 
 
 def main():
