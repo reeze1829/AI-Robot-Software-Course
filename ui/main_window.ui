@@ -226,7 +226,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="btn_stop">
+   <widget class="QPushButton" name="btn_emergency_stop">
     <property name="geometry">
      <rect>
       <x>370</x>

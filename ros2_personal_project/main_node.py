@@ -42,6 +42,7 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.teleop_window.btn_right.clicked.connect(lambda: self.move_robot("right"))
         self.teleop_window.btn_stop.clicked.connect(lambda: self.move_robot("stop"))
         self.btn_reset.clicked.connect(self.btn_reset_clicked)
+        self.btn_emergency_stop.clicked.connect(self.emergency_stop)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.ros_spin)
@@ -105,6 +106,11 @@ class MainNode(Node, QtWidgets.QMainWindow):
         else:
             self.get_logger().error("서비스가 준비되지 않았습니다.")
             self.text_log.append("오류: 서비스 연결 실패")
+
+    def emergency_stop(self):
+        self.move_robot("stop")
+        if hasattr(self, 'text_log'):
+            self.text_log.append("<b style='color:red;'>[EMERGENCY] 긴급 정지!</b>")
 
 
 def main():
