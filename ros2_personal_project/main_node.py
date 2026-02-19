@@ -47,9 +47,15 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.btn_go_to_goal.clicked.connect(self.start_move_to_goal)
         self.is_moving_to_goal = False
 
+
         self.timer = QTimer()
         self.timer.timeout.connect(self.ros_spin)
         self.timer.start(10)
+
+        self.btn_draw_square.clicked.connect(self.start_draw_square)
+        self.square_waypoints = []
+        self.current_waypoint_idx = 0
+        self.is_drawing_square = False
 
     def open_teleop(self):
         self.teleop_window.show()
@@ -108,16 +114,19 @@ class MainNode(Node, QtWidgets.QMainWindow):
             self.go_to_goal_logic()
 
     def go_to_goal_logic(self):
-        dx = self.target_x - self.curr_x
-        dy = self.target_y - self.curr_y
-
+        dx, dy = self.target_x - self.curr_x, self.target_y - self.curr_y
         dist = math.sqrt(dx**2 + dy**2)
-        err_a = math.atan2(dy, dx) - self.curr_theta
-        err_a = math.atan2(math.sin(err_a), math.cos(err_a))
 
         if dist < 0.05:
-            self.stop_and_finish()
+            if self.is_drawing_square and self.current_waypoint_idx < 3:
+                self.current_waypoint_idx += 1
+                self.target_x, self.target_y = self.square_waypoints[self.current_waypoint_idx]
+            else:
+                self.is_drawing_square = False
+                self.stop_and_finish()
         else:
+            err_a = math.atan2(dy, dx) - self.curr_theta
+            err_a = math.atan2(math.sin(err_a), math.cos(err_a))
             lx = 0.2 if abs(err_a) < 0.1 else 0.0
             az = 0.5 * (1 if err_a > 0 else -1) if lx == 0.0 else 0.0
             self.send_velocity(lx, az)
@@ -162,6 +171,13 @@ class MainNode(Node, QtWidgets.QMainWindow):
 
         self.is_moving_to_goal = True
         self.text_log.append(f"목표 ({self.target_x}, {self.target_y})로 이동!")
+
+    def start_draw_square(self):
+        self.square_waypoints = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0)]
+        self.current_waypoint_idx = 0
+        self.is_drawing_square = True
+        self.target_x, self.target_y = self.square_waypoints[0]
+        self.is_moving_to_goal = True
 
 
 def main():
