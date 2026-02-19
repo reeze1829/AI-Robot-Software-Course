@@ -43,6 +43,7 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.teleop_window.btn_stop.clicked.connect(lambda: self.move_robot("stop"))
         self.btn_reset.clicked.connect(self.btn_reset_clicked)
         self.btn_emergency_stop.clicked.connect(self.emergency_stop)
+        self.btn_get_distance.clicked.connect(self.get_distance)
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.ros_spin)
@@ -111,6 +112,18 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.move_robot("stop")
         if hasattr(self, 'text_log'):
             self.text_log.append("<b style='color:red;'>[EMERGENCY] 긴급 정지!</b>")
+
+    def get_distance(self):
+        try:
+            goal_x = float(self.input_goal_x.text())
+            goal_y = float(self.input_goal_y.text())
+            curr_x = float(self.lbl_pos_x.text())
+            curr_y = float(self.lbl_pos_y.text())
+            distance = math.sqrt((goal_x - curr_x)**2 + (goal_y - curr_y)**2)
+            self.text_log.append(f"목표까지 남은 거리: {distance:.2f} m")
+
+        except ValueError:
+            pass
 
 
 def main():
