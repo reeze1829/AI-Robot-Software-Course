@@ -117,12 +117,21 @@ class MainNode(Node, QtWidgets.QMainWindow):
         dx, dy = self.target_x - self.curr_x, self.target_y - self.curr_y
         dist = math.sqrt(dx**2 + dy**2)
 
-        if dist < 0.05:
-            if self.is_drawing_square and self.current_waypoint_idx < 3:
+        if dist < 0.1:
+            if self.is_drawing_square:
                 self.current_waypoint_idx += 1
-                self.target_x, self.target_y = self.square_waypoints[self.current_waypoint_idx]
+
+                percent = self.current_waypoint_idx * 25
+                self.progress_bar.setValue(percent)
+
+                if self.current_waypoint_idx < 4:
+                    self.target_x, self.target_y = self.square_waypoints[self.current_waypoint_idx]
+                    self.lbl_mission_status.setText(f"진행 중... ({self.current_waypoint_idx}/4)")
+                else:
+                    self.lbl_mission_status.setText("사각형 그리기 완료! ")
+                    self.is_drawing_square = False
+                    self.stop_and_finish()
             else:
-                self.is_drawing_square = False
                 self.stop_and_finish()
         else:
             err_a = math.atan2(dy, dx) - self.curr_theta
@@ -173,11 +182,16 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.text_log.append(f"목표 ({self.target_x}, {self.target_y})로 이동!")
 
     def start_draw_square(self):
+        self.lbl_mission_status.setText("사각형 그리기 시작!")
+        self.progress_bar.setValue(0)
+
         self.square_waypoints = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0)]
         self.current_waypoint_idx = 0
         self.is_drawing_square = True
+
         self.target_x, self.target_y = self.square_waypoints[0]
         self.is_moving_to_goal = True
+        self.get_logger().info("사각형 미션 시작: '대기 중' 텍스트 변경 완료")
 
 
 def main():
