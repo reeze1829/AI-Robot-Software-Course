@@ -44,6 +44,8 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.btn_reset.clicked.connect(self.btn_reset_clicked)
         self.btn_emergency_stop.clicked.connect(self.emergency_stop)
         self.btn_get_distance.clicked.connect(self.get_distance)
+        self.btn_go_to_goal.clicked.connect(self.start_move_to_goal)
+        self.is_moving_to_goal = False
 
         self.timer = QTimer()
         self.timer.timeout.connect(self.ros_spin)
@@ -84,23 +86,51 @@ class MainNode(Node, QtWidgets.QMainWindow):
         rclpy.spin_once(self, timeout_sec=0)
 
     def odom_callback(self, msg):
-        curr_x = msg.pose.pose.position.x
-        curr_y = msg.pose.pose.position.y
+        self.curr_x = msg.pose.pose.position.x
+        self.curr_y = msg.pose.pose.position.y
 
         q = msg.pose.pose.orientation
         siny_cosp = 2 * (q.w * q.z + q.x * q.y)
         cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
-        curr_theta = math.degrees(math.atan2(siny_cosp, cosy_cosp))
+        #curr_theta = math.degrees(math.atan2(siny_cosp, cosy_cosp))
+        self.curr_theta = math.atan2(siny_cosp, cosy_cosp)
 
-        curr_linear_vel = msg.twist.twist.linear.x
-        self.lbl_pos_x.setText(f"{msg.pose.pose.position.x:.2f}")
-        self.lbl_pos_y.setText(f"{msg.pose.pose.position.y:.2f}")
-        self.lbl_theta.setText(f"{curr_theta:.1f}")
+        #curr_linear_vel = msg.twist.twist.linear.x
+        #self.lbl_pos_x.setText(f"{msg.pose.pose.position.x:.2f}")
+        #self.lbl_pos_y.setText(f"{msg.pose.pose.position.y:.2f}")
+        #self.lbl_theta.setText(f"{curr_theta:.1f}")
+        curr_theta_deg = math.degrees(self.curr_theta)
+        self.lbl_pos_x.setText(f"{self.curr_x:.2f}")
+        self.lbl_pos_y.setText(f"{self.curr_y:.2f}")
+        self.lbl_theta.setText(f"{curr_theta_deg:.1f}")
+
+        if self.is_moving_to_goal:
+            self.go_to_goal_logic()
+
+    def go_to_goal_logic(self):
+        dx = self.target_x - self.curr_x
+        dy = self.target_y - self.curr_y
+
+        dist = math.sqrt(dx**2 + dy**2)
+        err_a = math.atan2(dy, dx) - self.curr_theta
+        err_a = math.atan2(math.sin(err_a), math.cos(err_a))
+
+        if dist < 0.05:
+            self.stop_and_finish()
+        else:
+            lx = 0.2 if abs(err_a) < 0.1 else 0.0
+            az = 0.5 * (1 if err_a > 0 else -1) if lx == 0.0 else 0.0
+            self.send_velocity(lx, az)
+
+    def stop_and_finish(self):
+        self.is_moving_to_goal = False
+        self.send_velocity(0.0, 0.0)
+        self.text_log.append("<b style='color:blue;'>[도착] 목적지에 도착했습니다!</b>")
 
     def btn_reset_clicked(self):
         self.get_logger().info("리셋 버튼 클릭됨!")
+        self.is_moving_to_goal = False
         req = Empty.Request()
-
         if self.reset_client.service_is_ready():
             self.reset_client.call_async(req)
             self.text_log.append("원점 복귀 명령 전송 완료!")
@@ -109,7 +139,8 @@ class MainNode(Node, QtWidgets.QMainWindow):
             self.text_log.append("오류: 서비스 연결 실패")
 
     def emergency_stop(self):
-        self.move_robot("stop")
+        self.is_moving_to_goal = False
+        self.send_velocity(0.0, 0.0)
         if hasattr(self, 'text_log'):
             self.text_log.append("<b style='color:red;'>[EMERGENCY] 긴급 정지!</b>")
 
@@ -124,6 +155,13 @@ class MainNode(Node, QtWidgets.QMainWindow):
 
         except ValueError:
             pass
+
+    def start_move_to_goal(self):
+        self.target_x = float(self.input_goal_x.text())
+        self.target_y = float(self.input_goal_y.text())
+
+        self.is_moving_to_goal = True
+        self.text_log.append(f"목표 ({self.target_x}, {self.target_y})로 이동!")
 
 
 def main():
