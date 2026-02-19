@@ -157,7 +157,7 @@
      <string>거리 계산</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="btn_start_maze">
+   <widget class="QPushButton" name="btn_action_start">
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -167,7 +167,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>미로 미션 시작</string>
+     <string>미션 시작</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="input_goal_x">
