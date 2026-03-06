@@ -1,1 +1,23 @@
 .vscode/
+
+# ROS2 / colcon build artifacts
+build/
+install/
+log/
+
+# Python caches and artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+*.egg
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE / editor local files
+.idea/
