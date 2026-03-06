@@ -20,13 +20,19 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
-    number_of_follower = 4
+def _launch_setup(context):
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context)
+    number_of_follower = int(LaunchConfiguration('number_of_follower').perform(context))
+
+    if number_of_follower < 1 or number_of_follower > 4:
+        raise RuntimeError('number_of_follower must be between 1 and 4')
+
     follower = Node(
         package='turtlebot3_follower',
         executable='follower',
@@ -85,4 +91,24 @@ def generate_launch_description():
         nodes.append(lifecycle_node)
         nodes.append(velocity_smoother_node)
 
-    return LaunchDescription(nodes)
+    return nodes
+
+
+def generate_launch_description():
+    ld = LaunchDescription()
+    ld.add_action(
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='false',
+            description='Use simulation clock if true'
+        )
+    )
+    ld.add_action(
+        DeclareLaunchArgument(
+            'number_of_follower',
+            default_value='1',
+            description='Number of follower robots'
+        )
+    )
+    ld.add_action(OpaqueFunction(function=_launch_setup))
+    return ld
