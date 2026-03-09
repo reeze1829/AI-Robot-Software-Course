@@ -19,6 +19,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include <tf2/utils.h>
+
 
 Follower::Follower(const std::string & follower_name, const std::string & leader_name)
 : Node(follower_name + "_follower_node"),
@@ -157,16 +159,23 @@ void Follower::send_path()
   const double leader_y = this->leader_pose_in_tracking_frame_.transform.translation.y;
   const double follower_x = this->follower_pose_in_tracking_frame_.transform.translation.x;
   const double follower_y = this->follower_pose_in_tracking_frame_.transform.translation.y;
-  const double dx = leader_x - follower_x;
-  const double dy = leader_y - follower_y;
-  const double distance = std::hypot(dx, dy);
-  if (distance > 1e-6) {
-    const double scale = std::max(0.0, (distance - this->follow_distance_) / distance);
-    second_target_pose.pose.position.x = follower_x + dx * scale;
-    second_target_pose.pose.position.y = follower_y + dy * scale;
-    const double yaw = std::atan2(dy, dx);
+  const auto & leader_q_msg = this->leader_pose_in_tracking_frame_.transform.rotation;
+  tf2::Quaternion leader_q;
+  tf2::fromMsg(leader_q_msg, leader_q);
+  const double leader_yaw = tf2::getYaw(leader_q);
+
+  // Hybrid target generation:
+  // Use the leader heading and place target at "follow_distance" behind leader.
+  const double target_x = leader_x - this->follow_distance_ * std::cos(leader_yaw);
+  const double target_y = leader_y - this->follow_distance_ * std::sin(leader_yaw);
+
+  const double dx = target_x - follower_x;
+  const double dy = target_y - follower_y;
+  if (std::hypot(dx, dy) > 1e-6) {
+    second_target_pose.pose.position.x = target_x;
+    second_target_pose.pose.position.y = target_y;
     tf2::Quaternion quat;
-    quat.setRPY(0.0, 0.0, yaw);
+    quat.setRPY(0.0, 0.0, std::atan2(dy, dx));
     second_target_pose.pose.orientation = tf2::toMsg(quat);
   } else {
     second_target_pose.pose.position.x = follower_x;
