@@ -32,7 +32,7 @@ Follower::Follower(const std::string & follower_name, const std::string & leader
   last_goal_sent_time_(0, 0, this->get_clock()->get_clock_type())
 {
   this->declare_parameter<bool>("publish_odom_bridge", true);
-  this->declare_parameter<double>("follow_distance", 0.5);
+  this->declare_parameter<double>("follow_distance", 0.3);
   this->declare_parameter<double>("goal_update_distance_threshold", 0.03);
   this->declare_parameter<double>("goal_update_min_period_sec", 0.3);
   this->declare_parameter<std::string>("tracking_frame", "map");

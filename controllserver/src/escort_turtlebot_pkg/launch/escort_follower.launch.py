@@ -21,141 +21,82 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.actions import OpaqueFunction
 from launch.actions import TimerAction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def _launch_setup(context):
+def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
-    number_of_follower = int(LaunchConfiguration('number_of_follower').perform(context))
-    follow_distance = LaunchConfiguration('follow_distance').perform(context)
-    use_lidar_bridge = LaunchConfiguration('use_lidar_bridge').perform(context).lower() in ('1', 'true', 'yes')
-    use_map_tracking = LaunchConfiguration('use_map_tracking').perform(context).lower() in ('1', 'true', 'yes')
-    tracking_frame = LaunchConfiguration('tracking_frame').perform(context)
-    initial_dx = LaunchConfiguration('initial_dx').perform(context)
-    initial_dy = LaunchConfiguration('initial_dy').perform(context)
-
-    if number_of_follower < 1 or number_of_follower > 4:
-        raise RuntimeError('number_of_follower must be between 1 and 4')
+    follow_distance = LaunchConfiguration('follow_distance')
 
     follower = Node(
         package='escort_follower',
         executable='follower',
         output='screen',
-        arguments=[str(number_of_follower)],
+        arguments=['1'],
         parameters=[
             {'use_sim_time': use_sim_time},
-            {'follow_distance': float(follow_distance)},
+            {'follow_distance': follow_distance},
             {'publish_odom_bridge': False},
-            {'tracking_frame': tracking_frame},
+            {'tracking_frame': 'TB3_1/odom'},
         ]
     )
-    nodes = []
-    nodes.append(follower)
-    for i in range(number_of_follower):
-        namespace = f'TB3_{i+2}'
-        leader_namespace = f'TB3_{i+1}'
-        tf_bridge_node = None
-        if not use_map_tracking:
-            if use_lidar_bridge:
-                tf_bridge_node = Node(
-                    package='escort_turtlebot_pkg',
-                    executable='lidar_odom_bridge',
-                    name=f'lidar_odom_bridge_{leader_namespace}_to_{namespace}',
-                    output='screen',
-                    respawn=True,
-                    respawn_delay=2.0,
-                    parameters=[
-                        {'use_sim_time': use_sim_time},
-                        {'scan_topic': f'/{namespace}/scan'},
-                        {'leader_ns': leader_namespace},
-                        {'follower_ns': namespace},
-                        {'target_bearing_deg': 0.0},
-                        {'search_half_angle_deg': 35.0},
-                        {'min_range': 0.12},
-                        {'max_range': 3.0},
-                        {'smoothing_alpha': 0.35},
-                        {'min_candidate_points': 3},
-                        {'max_tracking_jump': 0.6},
-                    ],
-                )
-            else:
-                tf_bridge_node = Node(
-                    package='tf2_ros',
-                    executable='static_transform_publisher',
-                    name=f'odom_bridge_{leader_namespace}_to_{namespace}',
-                    output='screen',
-                    arguments=[
-                        str(initial_dx), str(initial_dy), '0',
-                        '0', '0', '0',
-                        f'{leader_namespace}/odom',
-                        f'{namespace}/odom',
-                    ],
-                )
-
-        custom_ctrl_yaml_path = os.path.join(
-            get_package_share_directory('escort_turtlebot_pkg'),
-            'param',
-            f'escort_controll_server{i+1}.yaml'
-        )
-        default_ctrl_yaml_path = os.path.join(
+    namespace = 'TB3_2'
+    ctrl_yaml_path = os.path.join(
+        get_package_share_directory('escort_turtlebot_pkg'),
+        'param',
+        'escort_controll_server1.yaml'
+    )
+    if not os.path.exists(ctrl_yaml_path):
+        ctrl_yaml_path = os.path.join(
             get_package_share_directory('escort_follower'),
             'param',
-            f'controll_server{i+1}.yaml'
-        )
-        ctrl_yaml_path = custom_ctrl_yaml_path if os.path.exists(custom_ctrl_yaml_path) else default_ctrl_yaml_path
-
-        ctrl_node = Node(
-            package='nav2_controller',
-            executable='controller_server',
-            namespace=namespace,
-            name='controller_server',
-            output='screen',
-            parameters=[
-                ctrl_yaml_path,
-                {'use_sim_time': use_sim_time}],
-            remappings=[
-                (f'/{namespace}/cmd_vel', f'/{namespace}/cmd_vel_not_smoothed')]
+            'controll_server1.yaml'
         )
 
-        lifecycle_node = Node(
-            package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            namespace=namespace,
-            name='lifecycle_manager_controller',
-            output='screen',
-            parameters=[
-                {'autostart': True},
-                {'use_sim_time': use_sim_time},
-                {'node_names': ['controller_server', 'velocity_smoother']}],
-        )
+    tf_bridge_node = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='odom_bridge_TB3_1_to_TB3_2',
+        output='screen',
+        arguments=['0.0', '0.0', '0', '0', '0', '0', 'TB3_1/odom', 'TB3_2/odom'],
+    )
 
-        velocity_smoother_node = Node(
-            package='nav2_velocity_smoother',
-            executable='velocity_smoother',
-            namespace=namespace,
-            name='velocity_smoother',
-            output='screen',
-            parameters=[ctrl_yaml_path],
-            remappings=[
-                (f'/{namespace}/cmd_vel', f'/{namespace}/cmd_vel_not_smoothed'),
-                (f'/{namespace}/cmd_vel_smoothed', f'/{namespace}/cmd_vel')]
-        )
-        if tf_bridge_node is not None:
-            nodes.append(tf_bridge_node)
-        nodes.append(
-            TimerAction(
-                period=3.0,
-                actions=[ctrl_node, lifecycle_node, velocity_smoother_node],
-            )
-        )
+    ctrl_node = Node(
+        package='nav2_controller',
+        executable='controller_server',
+        namespace=namespace,
+        name='controller_server',
+        output='screen',
+        parameters=[ctrl_yaml_path, {'use_sim_time': use_sim_time}],
+        remappings=[('/TB3_2/cmd_vel', '/TB3_2/cmd_vel_not_smoothed')]
+    )
 
-    return nodes
+    lifecycle_node = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        namespace=namespace,
+        name='lifecycle_manager_controller',
+        output='screen',
+        parameters=[
+            {'autostart': True},
+            {'use_sim_time': use_sim_time},
+            {'node_names': ['controller_server', 'velocity_smoother']}],
+    )
 
+    velocity_smoother_node = Node(
+        package='nav2_velocity_smoother',
+        executable='velocity_smoother',
+        namespace=namespace,
+        name='velocity_smoother',
+        output='screen',
+        parameters=[ctrl_yaml_path],
+        remappings=[
+            ('/TB3_2/cmd_vel', '/TB3_2/cmd_vel_not_smoothed'),
+            ('/TB3_2/cmd_vel_smoothed', '/TB3_2/cmd_vel')]
+    )
 
-def generate_launch_description():
     ld = LaunchDescription()
     ld.add_action(
         DeclareLaunchArgument(
@@ -166,52 +107,17 @@ def generate_launch_description():
     )
     ld.add_action(
         DeclareLaunchArgument(
-            'number_of_follower',
-            default_value='1',
-            description='Number of follower robots'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
             'follow_distance',
-            default_value='0.6',
+            default_value='0.3',
             description='Target center-to-center distance from leader (meters)'
         )
     )
+    ld.add_action(tf_bridge_node)
+    ld.add_action(follower)
     ld.add_action(
-        DeclareLaunchArgument(
-            'use_lidar_bridge',
-            default_value='true',
-            description='Use LiDAR-based odom bridge instead of static transform'
+        TimerAction(
+            period=3.0,
+            actions=[ctrl_node, lifecycle_node, velocity_smoother_node],
         )
     )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'use_map_tracking',
-            default_value='true',
-            description='Track in shared frame (map) and skip odom bridging'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'tracking_frame',
-            default_value='map',
-            description='Shared frame used by follower path generation'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'initial_dx',
-            default_value='-0.6',
-            description='Static bridge x (leader odom -> follower odom) when LiDAR bridge is disabled'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'initial_dy',
-            default_value='0.0',
-            description='Static bridge y (leader odom -> follower odom) when LiDAR bridge is disabled'
-        )
-    )
-    ld.add_action(OpaqueFunction(function=_launch_setup))
     return ld

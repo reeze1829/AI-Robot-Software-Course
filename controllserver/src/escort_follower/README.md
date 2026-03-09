@@ -54,8 +54,7 @@ source install/setup.bash
 
 ### 실행 예시
 ```bash
-ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
-  number_of_follower:=1 use_lidar_bridge:=true use_sim_time:=false
+ros2 launch escort_turtlebot_pkg escort_follower.launch.py number_of_follower:=1 use_lidar_bridge:=true use_sim_time:=false
 ```
 
 ### 주요 파라미터 (`follower` 노드)
