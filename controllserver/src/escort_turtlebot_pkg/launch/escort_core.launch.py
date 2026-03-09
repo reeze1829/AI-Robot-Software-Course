@@ -42,7 +42,7 @@ def generate_launch_description():
     )
     declare_leader_initial_move_enabled = DeclareLaunchArgument(
         'leader_initial_move_enabled',
-        default_value='true',
+        default_value='false',
         description='Run one-time initial forward movement for leader robot'
     )
     declare_leader_initial_move = DeclareLaunchArgument(
