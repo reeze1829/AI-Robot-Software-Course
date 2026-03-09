@@ -28,7 +28,7 @@ def generate_launch_description():
     )
     declare_odom_bridge_x = DeclareLaunchArgument(
         'odom_bridge_x',
-        default_value='-1.2',
+        default_value='-0.22',
         description='Static TF x offset from TB3_1/odom to TB3_2/odom'
     )
     declare_odom_bridge_y = DeclareLaunchArgument(

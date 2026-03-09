@@ -8,6 +8,7 @@ Python launch/bridge integration package for escort simulation and runtime orche
 - Runs a hybrid follower behavior:
   - Leader rear-target idea from `team_project`
   - Nav2 `FollowPath` execution from `escort_follower`
+  - Start from near-contact placement, then leader moves forward `0.5m` once
 
 ## Build
 ```bash
@@ -48,6 +49,8 @@ but keep remapping to `/TB3_1/cmd_vel`.
   Leader spawn pose.
 - `follower_x`, `follower_y` (double)
   Follower spawn pose.
+- `leader_initial_move` (double, default: `0.5`)
+  One-time initial forward distance for leader.
 
 ## 한국어 안내
 
@@ -59,6 +62,7 @@ but keep remapping to `/TB3_1/cmd_vel`.
 - 하이브리드 추종 방식 사용
   - `team_project`의 리더 후방 목표점 아이디어
   - `escort_follower`의 Nav2 `FollowPath` 추종 실행
+  - 초기 근접 배치 후 리더가 시작 시 `0.5m` 1회 전진
 
 ### 빌드
 ```bash
@@ -96,3 +100,4 @@ ros2 run turtlebot3_teleop teleop_keyboard --ros-args -r cmd_vel:=/TB3_1/cmd_vel
 - `use_sim_time` (기본값 `true`): 시뮬레이션 시간 사용 여부
 - `leader_x`, `leader_y`: leader 스폰 위치
 - `follower_x`, `follower_y`: follower 스폰 위치
+- `leader_initial_move` (기본값 `0.5`): 리더 시작 시 1회 전진 거리

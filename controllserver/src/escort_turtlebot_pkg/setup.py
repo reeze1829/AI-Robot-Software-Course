@@ -25,5 +25,9 @@ setup(
             'pytest',
         ],
     },
-    entry_points={'console_scripts': []},
+    entry_points={
+        'console_scripts': [
+            'leader_initial_move_node = escort_turtlebot_pkg.leader_initial_move_node:main',
+        ],
+    },
 )
