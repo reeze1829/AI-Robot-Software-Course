@@ -15,8 +15,7 @@
         movement_time_allowance: 10.0
       goal_checker:
         plugin: "nav2_controller::SimpleGoalChecker"
-        # Keep about one-person spacing from leader instead of docking to zero distance.
-        xy_goal_tolerance: 0.9
+        xy_goal_tolerance: 0.2
         yaw_goal_tolerance: 0.3
         stateful: True
       FollowPath:
@@ -43,7 +42,7 @@
         linear_granularity: 0.05
         angular_granularity: 0.025
         transform_tolerance: 0.2
-        xy_goal_tolerance: 0.9
+        xy_goal_tolerance: 0.25
         trans_stopped_velocity: 0.2
         short_circuit_trajectory_evaluation: True
         limit_vel_cmd_in_traj: False
@@ -68,7 +67,7 @@
   local_costmap:
     local_costmap:
       ros__parameters:
-        global_frame: map
+        global_frame: TB3_2/odom
         robot_base_frame: TB3_2/base_footprint
         update_frequency: 5.0
         resolution: 0.05

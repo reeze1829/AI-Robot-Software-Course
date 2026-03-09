@@ -30,6 +30,7 @@ from launch_ros.actions import Node
 def _launch_setup(context):
     use_sim_time = LaunchConfiguration('use_sim_time')
     number_of_follower = int(LaunchConfiguration('number_of_follower').perform(context))
+    follow_distance = LaunchConfiguration('follow_distance').perform(context)
     use_lidar_bridge = LaunchConfiguration('use_lidar_bridge').perform(context).lower() in ('1', 'true', 'yes')
     use_map_tracking = LaunchConfiguration('use_map_tracking').perform(context).lower() in ('1', 'true', 'yes')
     tracking_frame = LaunchConfiguration('tracking_frame').perform(context)
@@ -46,7 +47,7 @@ def _launch_setup(context):
         arguments=[str(number_of_follower)],
         parameters=[
             {'use_sim_time': use_sim_time},
-            {'follow_distance': 0.5},
+            {'follow_distance': float(follow_distance)},
             {'publish_odom_bridge': False},
             {'tracking_frame': tracking_frame},
         ]
@@ -168,6 +169,13 @@ def generate_launch_description():
             'number_of_follower',
             default_value='1',
             description='Number of follower robots'
+        )
+    )
+    ld.add_action(
+        DeclareLaunchArgument(
+            'follow_distance',
+            default_value='0.6',
+            description='Target center-to-center distance from leader (meters)'
         )
     )
     ld.add_action(
