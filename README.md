@@ -21,6 +21,24 @@ colcon build
 source install/setup.bash
 ```
 
+## Integrated Simulation (robot + controllserver)
+`escort_sim.launch.py` now supports two follower stacks:
+- `team_project`: simple Python leader/follower follower logic
+- `escort_follower`: existing Nav2-based follower stack
+
+```bash
+cd /home/penguin/escort_ws/controllserver
+source /opt/ros/humble/setup.bash
+source /home/penguin/turtlebot3_ws/install/setup.bash
+source install/setup.bash
+
+# Default: team_project-style follower
+ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=team_project
+
+# Existing controllserver follower stack
+ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=escort_follower
+```
+
 ## 한국어 안내
 
 여기는 팀 공용 워크스페이스 인덱스 문서입니다.

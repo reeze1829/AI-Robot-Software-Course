@@ -12,8 +12,11 @@ from launch.actions import OpaqueFunction
 from launch.actions import RegisterEventHandler
 from launch.actions import TimerAction
 from launch.event_handlers import OnShutdown
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import PythonExpression
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 
 
@@ -23,6 +26,7 @@ def _launch_setup(context):
     number_of_robots = 2
 
     use_sim_time = LaunchConfiguration('use_sim_time')
+    follow_stack = LaunchConfiguration('follow_stack')
     leader_x = LaunchConfiguration('leader_x').perform(context)
     leader_y = LaunchConfiguration('leader_y').perform(context)
     follower_x = LaunchConfiguration('follower_x').perform(context)
@@ -56,6 +60,31 @@ def _launch_setup(context):
     core_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(escort_launch_dir, 'escort_core.launch.py')),
         launch_arguments={'use_sim_time': use_sim_time, 'number_of_follower': '1'}.items(),
+        condition=IfCondition(PythonExpression(["'", follow_stack, "' == 'escort_follower'"])),
+    )
+    leader_node = Node(
+        package='escort_turtlebot_pkg',
+        executable='leader_node',
+        output='screen',
+        parameters=[
+            {'leader_odom_topic': '/TB3_1/odom'},
+            {'target_topic': '/leader/relative_pos'},
+            {'follow_offset': 1.0},
+            {'use_sim_time': use_sim_time},
+        ],
+        condition=IfCondition(PythonExpression(["'", follow_stack, "' == 'team_project'"])),
+    )
+    follower_node = Node(
+        package='escort_turtlebot_pkg',
+        executable='follower_node',
+        output='screen',
+        parameters=[
+            {'follower_odom_topic': '/TB3_2/odom'},
+            {'target_topic': '/leader/relative_pos'},
+            {'cmd_vel_topic': '/TB3_2/cmd_vel'},
+            {'use_sim_time': use_sim_time},
+        ],
+        condition=IfCondition(PythonExpression(["'", follow_stack, "' == 'team_project'"])),
     )
 
     robot_state_publisher_cmd_list = []
@@ -126,7 +155,7 @@ def _launch_setup(context):
     actions.append(
         TimerAction(
             period=5.0,
-            actions=[core_launch],
+            actions=[core_launch, leader_node, follower_node],
         )
     )
 
@@ -140,6 +169,13 @@ def generate_launch_description():
             'use_sim_time',
             default_value='true',
             description='Use simulation clock if true',
+        )
+    )
+    ld.add_action(
+        DeclareLaunchArgument(
+            'follow_stack',
+            default_value='team_project',
+            description='Follower stack: team_project or escort_follower',
         )
     )
     ld.add_action(DeclareLaunchArgument('leader_x', default_value='0.0'))
