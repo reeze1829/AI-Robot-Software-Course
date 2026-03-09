@@ -32,3 +32,12 @@
 - `TB3_1`/`TB3_2` 프레임 연결(TF tree) 유효성 확인
 - 추종 프레임(`tracking_frame`)과 costmap `global_frame` 일치 확인
 - LiDAR 기반 임계값 사용 시 노이즈 필터(평균/중앙값/점프 제한) 적용 검토
+
+## 6) 현재 코드 기준 적용 상태 (2026-03)
+
+- follower 목표점 생성:
+  - 리더 위치 + 리더 yaw를 사용해, 리더 뒤 `follow_distance` 오프셋 지점을 목표점으로 생성
+- 추종 실행:
+  - 목표점을 포함한 2-point 경로를 Nav2 `FollowPath`로 전송
+- 업데이트 제어:
+  - `goal_update_distance_threshold`, `goal_update_min_period_sec`로 goal 과전송 제한

@@ -6,6 +6,7 @@ C++ package for multi-TurtleBot follower control using TF-relative target genera
 - Runs follower nodes for `TB3_2 ... TB3_n`.
 - Computes leader pose in follower frame from TF.
 - Builds short 2-point path and sends `FollowPath` goals.
+- Uses a hybrid target rule: target point is generated behind leader heading.
 
 ## Build
 ```bash
@@ -17,12 +18,12 @@ source install/setup.bash
 ## Run (Example)
 ```bash
 ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
-  number_of_follower:=1 use_lidar_bridge:=true use_sim_time:=false
+  follow_distance:=0.3 use_sim_time:=false
 ```
 
 ## Main Parameters (`follower` node)
-- `follow_distance` (double, default: `0.5`)
-  Desired distance to keep from leader.
+- `follow_distance` (double, default: `0.3`)
+  Rear offset from leader heading used to generate follow target.
 - `publish_odom_bridge` (bool, default: `true`)
   Enable internal TF bridge publishing (`leader/odom -> follower/odom`).
 - `goal_update_distance_threshold` (double, default: `0.03`)
@@ -56,11 +57,11 @@ source install/setup.bash
 
 ### 실행 예시
 ```bash
-ros2 launch escort_turtlebot_pkg escort_follower.launch.py number_of_follower:=1 use_lidar_bridge:=true use_sim_time:=false
+ros2 launch escort_turtlebot_pkg escort_follower.launch.py follow_distance:=0.3 use_sim_time:=false
 ```
 
 ### 주요 파라미터 (`follower` 노드)
-- `follow_distance` (기본값 `0.5`): 리더와 유지할 목표 거리
+- `follow_distance` (기본값 `0.3`): 리더 진행 방향 기준 뒤쪽 목표점 오프셋
 - `publish_odom_bridge` (기본값 `true`): 내부 TF 브리지(`leader/odom -> follower/odom`) 사용 여부
 - `goal_update_distance_threshold` (기본값 `0.03`): 새 goal 전송을 위한 최소 목표 변화량
 - `goal_update_min_period_sec` (기본값 `0.3`): goal 전송 최소 주기(초)

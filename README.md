@@ -7,36 +7,18 @@ Shared ROS 2 workspace for multi-member TurtleBot projects.
 - Each package should keep its own detailed README for build/run/config.
 
 ## Package Index
-- `controllserver/src/escort_follower`  
-  C++ follower node package.  
+- `controllserver/src/escort_follower`
+  C++ follower node package.
   See module docs: `controllserver/src/escort_follower/README.md`
-- `controllserver/src/escort_turtlebot_pkg`  
-  Python launch/bridge integration package.  
-  Add and maintain package-specific docs inside this folder.
+- `controllserver/src/escort_turtlebot_pkg`
+  Python launch/bridge integration package.
+  See module docs: `controllserver/src/escort_turtlebot_pkg/README.md`
 
 ## Common Build (Workspace)
 ```bash
 cd ~/escort_ws/controllserver
 colcon build
 source install/setup.bash
-```
-
-## Integrated Simulation (robot + controllserver)
-`escort_sim.launch.py` now supports two follower stacks:
-- `team_project`: simple Python leader/follower follower logic
-- `escort_follower`: existing Nav2-based follower stack
-
-```bash
-cd ~/escort_ws/controllserver
-source /opt/ros/humble/setup.bash
-source ~/turtlebot3_ws/install/setup.bash
-source install/setup.bash
-
-# Default: team_project-style follower
-ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=team_project
-
-# Existing controllserver follower stack
-ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=escort_follower
 ```
 
 ## 한국어 안내
@@ -49,20 +31,5 @@ ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=escort_follo
 현재 `escort_follower` 상세 문서는 아래에 있습니다.
 - `controllserver/src/escort_follower/README.md`
 
-### 통합 시뮬레이션 (robot + controllserver)
-`escort_sim.launch.py`는 follower 스택을 2가지로 선택할 수 있습니다.
-- `team_project`: Python 기반 leader/follower 추종 로직
-- `escort_follower`: 기존 Nav2 기반 follower 스택
-
-```bash
-cd ~/escort_ws/controllserver
-source /opt/ros/humble/setup.bash
-source ~/turtlebot3_ws/install/setup.bash
-source install/setup.bash
-
-# 기본값: team_project 추종 방식
-ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=team_project
-
-# 기존 controllserver follower 스택
-ros2 launch escort_turtlebot_pkg escort_sim.launch.py follow_stack:=escort_follower
-```
+현재 `escort_turtlebot_pkg` 상세 문서는 아래에 있습니다.
+- `controllserver/src/escort_turtlebot_pkg/README.md`
