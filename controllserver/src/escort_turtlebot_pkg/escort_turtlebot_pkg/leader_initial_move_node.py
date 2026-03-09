@@ -28,6 +28,7 @@ class LeaderInitialMoveNode(Node):
         self.active = False
         self.completed = False
         self.elapsed = 0.0
+        self.motion_started = False
         self.current_x = None
         self.current_y = None
         self.start_x = None
@@ -62,13 +63,20 @@ class LeaderInitialMoveNode(Node):
             # Wait until startup delay elapses.
             return
 
-        # Capture start pose on the first odom update after activation.
-        if self.start_x is None and self.current_x is not None:
+        # Wait for a live subscriber and odom before starting actual motion.
+        if self.cmd_pub.get_subscription_count() < 1:
+            return
+        if self.current_x is None:
+            return
+
+        # Capture start pose once when motion really starts.
+        if not self.motion_started:
             self.start_x = self.current_x
             self.start_y = self.current_y
+            self.motion_started = True
 
         moved_distance = 0.0
-        if self.start_x is not None and self.current_x is not None:
+        if self.motion_started:
             moved_distance = math.hypot(self.current_x - self.start_x, self.current_y - self.start_y)
 
         self.elapsed += self.timer_period

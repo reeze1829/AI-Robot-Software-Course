@@ -67,7 +67,7 @@ def _launch_setup(context):
             'number_of_follower': '1',
             'odom_bridge_x': odom_bridge_x,
             'odom_bridge_y': odom_bridge_y,
-            'leader_initial_move_enabled': 'true',
+            'leader_initial_move_enabled': 'false',
             'leader_initial_move': leader_initial_move,
             'leader_initial_move_speed': '0.10',
             'leader_initial_move_startup_delay': '2.0',
