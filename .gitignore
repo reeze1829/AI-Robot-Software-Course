@@ -1,1 +1,16 @@
 .vscode/
+
+# ROS 2 workspace build artifacts
+build/
+install/
+log/
+
+# Local temp files
+tmp/
+
+# Local nested workspace clone/copy
+controllserver/
+
+# Python cache
+__pycache__/
+*.py[cod]
