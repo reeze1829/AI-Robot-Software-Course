@@ -119,14 +119,14 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'initial_step_distance',
-            default_value='0.5',
+            default_value='0.0',
             description='Initial one-time forward step distance toward target (meters)'
         )
     )
     ld.add_action(
         DeclareLaunchArgument(
             'odom_bridge_x',
-            default_value='-1.2',
+            default_value='-0.22',
             description='Static TF x offset from TB3_1/odom to TB3_2/odom'
         )
     )
