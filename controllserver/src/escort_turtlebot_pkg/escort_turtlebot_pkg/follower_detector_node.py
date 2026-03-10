@@ -14,7 +14,8 @@ class FollowerDetectorNode(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
-
+        self.declare_parameter('use_sim_time', False)
+        
         self.subscription = self.create_subscription(
             LaserScan,
             '/TB3_1/scan',
@@ -55,8 +56,7 @@ class FollowerDetectorNode(Node):
             center_y = center_dist * math.sin(angle)
 
             pt_in_scan = PointStamped()
-            pt_in_scan.header.frame_id = 'TB3_1/base_scan'
-            pt_in_scan.header.stamp = rclpy.time.Time().to_msg()
+            pt_in_scan.header = msg.header
             pt_in_scan.point.x = center_x
             pt_in_scan.point.y = center_y
             pt_in_scan.point.z = 0.0
@@ -64,14 +64,14 @@ class FollowerDetectorNode(Node):
             transform_scan_to_odom1 = self.tf_buffer.lookup_transform(
                 'TB3_1/odom',
                 'TB3_1/base_scan',
-                rclpy.time.Time())
+                msg.header.stamp, rclpy.duration.Duration(seconds=0.5))
             
             pt_in_odom1 = tf2_geometry_msgs.do_transform_point(pt_in_scan, transform_scan_to_odom1)
 
             transform_odom2_to_base2 = self.tf_buffer.lookup_transform(
                 'TB3_2/odom',
                 'TB3_2/base_footprint',
-                rclpy.time.Time())
+                msg.header.stamp, rclpy.duration.Duration(seconds=0.5))
             
             new_tf = TransformStamped()
             new_tf.header.frame_id = 'TB3_1/odom'
@@ -94,13 +94,14 @@ class FollowerDetectorNode(Node):
             pass
 
     def publish_tf(self):
+        now = self.get_clock().now().to_msg()
         if self.latest_odom_tf is not None:
-            self.latest_odom_tf.header.stamp = self.get_clock().now().to_msg()
+            self.latest_odom_tf.header.stamp = now
             self.tf_broadcaster.sendTransform(self.latest_odom_tf)
         else:
             new_tf = TransformStamped()
             new_tf.header.frame_id = 'TB3_1/odom'
-            new_tf.header.stamp = self.get_clock().now().to_msg()
+            new_tf.header.stamp = now
             new_tf.child_frame_id = 'TB3_2/odom'
             new_tf.transform.translation.x = -0.4
             new_tf.transform.rotation.w = 1.0
