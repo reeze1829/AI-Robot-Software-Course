@@ -41,6 +41,7 @@ def generate_launch_description():
     follower = Node(
         package='escort_follower',
         executable='follower',
+        name='TB3_2_follower_node',
         output='screen',
         arguments=['1'],
         parameters=[
@@ -65,11 +66,12 @@ def generate_launch_description():
         )
 
     tf_bridge_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='odom_bridge_TB3_1_to_TB3_2',
+        package='escort_turtlebot_pkg',
+        executable='follower_detector_node',
+        name='follower_detector_node',
         output='screen',
-
+        parameters=[{'use_sim_time': use_sim_time}]
+    )
 
     leader_initial_move_node = Node(
         package='escort_turtlebot_pkg',
@@ -131,7 +133,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'follow_distance',
-            default_value='0.5',
+            default_value='0.35',
             description='Target center-to-center distance from leader (meters)'
         )
     )
