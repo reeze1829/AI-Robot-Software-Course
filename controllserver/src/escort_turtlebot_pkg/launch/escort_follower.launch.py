@@ -65,11 +65,11 @@ def generate_launch_description():
         )
 
     tf_bridge_node = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='odom_bridge_TB3_1_to_TB3_2',
-        output='screen',
-
+        package='escort_turtlebot_pkg',
+        executable='follower_detector_node',
+        name='follower_detector_node',
+        output='screen'
+    )
 
     leader_initial_move_node = Node(
         package='escort_turtlebot_pkg',

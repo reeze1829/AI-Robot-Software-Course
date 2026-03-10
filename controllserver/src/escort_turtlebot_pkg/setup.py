@@ -28,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'leader_initial_move_node = escort_turtlebot_pkg.leader_initial_move_node:main',
+            'follower_detector_node = escort_turtlebot_pkg.follower_detector_node:main',
         ],
     },
 )
