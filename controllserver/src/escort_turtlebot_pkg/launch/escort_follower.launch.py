@@ -133,7 +133,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'follow_distance',
-            default_value='0.5',
+            default_value='0.35',
             description='Target center-to-center distance from leader (meters)'
         )
     )

@@ -49,7 +49,7 @@ class FollowerDetectorNode(Node):
             avg_y = sum(p[1] for p in cluster) / len(cluster)
             
             dist = math.hypot(avg_x, avg_y)
-            center_dist = dist + 0.10  # adjust to center of follower
+            center_dist = dist + 0.07  # adjust to center of follower (Burger radius is ~0.07m)
             angle = math.atan2(avg_y, avg_x)
             center_x = center_dist * math.cos(angle)
             center_y = center_dist * math.sin(angle)
