@@ -33,10 +33,6 @@ def generate_launch_description():
     initial_step_distance = LaunchConfiguration('initial_step_distance')
     odom_bridge_x = LaunchConfiguration('odom_bridge_x')
     odom_bridge_y = LaunchConfiguration('odom_bridge_y')
-    leader_initial_move_enabled = LaunchConfiguration('leader_initial_move_enabled')
-    leader_initial_move = LaunchConfiguration('leader_initial_move')
-    leader_initial_move_speed = LaunchConfiguration('leader_initial_move_speed')
-    leader_initial_move_startup_delay = LaunchConfiguration('leader_initial_move_startup_delay')
 
     follower = Node(
         package='escort_follower',
@@ -71,21 +67,6 @@ def generate_launch_description():
         name='follower_detector_node',
         output='screen',
         parameters=[{'use_sim_time': use_sim_time}]
-    )
-
-    leader_initial_move_node = Node(
-        package='escort_turtlebot_pkg',
-        executable='leader_initial_move_node',
-        output='screen',
-        parameters=[
-            {'cmd_vel_topic': '/TB3_1/cmd_vel'},
-            {'odom_topic': '/TB3_1/odom'},
-            {'distance': leader_initial_move},
-            {'speed': leader_initial_move_speed},
-            {'startup_delay_sec': leader_initial_move_startup_delay},
-            {'max_duration_sec': 15.0},
-        ],
-        condition=IfCondition(leader_initial_move_enabled),
     )
 
     ctrl_node = Node(
@@ -133,7 +114,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'follow_distance',
-            default_value='0.35',
+            default_value='0.5',
             description='Target center-to-center distance from leader (meters)'
         )
     )
@@ -147,7 +128,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'odom_bridge_x',
-            default_value='-0.30',
+            default_value='-0.50',
             description='Static TF x offset from TB3_1/odom to TB3_2/odom'
         )
     )
@@ -158,36 +139,7 @@ def generate_launch_description():
             description='Static TF y offset from TB3_1/odom to TB3_2/odom'
         )
     )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'leader_initial_move_enabled',
-            default_value='false',
-            description='Run one-time initial forward movement for leader robot'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'leader_initial_move',
-            default_value='0.5',
-            description='One-time initial forward distance for leader robot (meters)'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'leader_initial_move_speed',
-            default_value='0.12',
-            description='Leader initial move linear speed (m/s)'
-        )
-    )
-    ld.add_action(
-        DeclareLaunchArgument(
-            'leader_initial_move_startup_delay',
-            default_value='1.0',
-            description='Delay before leader initial move starts (seconds)'
-        )
-    )
     ld.add_action(tf_bridge_node)
-    ld.add_action(leader_initial_move_node)
     ld.add_action(follower)
     ld.add_action(
         TimerAction(

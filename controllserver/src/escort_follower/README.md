@@ -26,7 +26,6 @@ ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
   Rear offset from leader heading used to generate follow target.
 - `initial_step_distance` (double, default: `0.0`)
   One-time initial forward step distance toward the generated target.
-  Default is `0.0` because leader performs the initial 0.5m move in `escort_sim.launch.py`.
 - `publish_odom_bridge` (bool, default: `true`)
   Enable internal TF bridge publishing (`leader/odom -> follower/odom`).
 - `goal_update_distance_threshold` (double, default: `0.03`)
@@ -65,8 +64,7 @@ ros2 launch escort_turtlebot_pkg escort_follower.launch.py follow_distance:=0.5 
 
 ### 주요 파라미터 (`follower` 노드)
 - `follow_distance` (기본값 `0.5`): 리더 진행 방향 기준 뒤쪽 목표점 오프셋
-- `initial_step_distance` (기본값 `0.0`): follower의 1회 초기 전진 거리  
-  (`escort_sim.launch.py`에서 리더가 0.5m 전진하므로 기본은 0.0)
+- `initial_step_distance` (기본값 `0.0`): follower의 1회 초기 전진 거리
 - `publish_odom_bridge` (기본값 `true`): 내부 TF 브리지(`leader/odom -> follower/odom`) 사용 여부
 - `goal_update_distance_threshold` (기본값 `0.03`): 새 goal 전송을 위한 최소 목표 변화량
 - `goal_update_min_period_sec` (기본값 `0.3`): goal 전송 최소 주기(초)
