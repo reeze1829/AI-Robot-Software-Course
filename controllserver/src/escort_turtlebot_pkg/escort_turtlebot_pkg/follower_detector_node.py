@@ -180,8 +180,8 @@ class FollowerDetectorNode(Node):
                 T_scan1_scan2_guess = T_scan1_odom1 @ T_odom1_odom2 @ T_odom2_scan2
                 init_pose = [T_scan1_scan2_guess[0, 2], T_scan1_scan2_guess[1, 2], math.atan2(T_scan1_scan2_guess[1, 0], T_scan1_scan2_guess[0, 0])]
             else:
-                # 초기 추정: TB3_2가 TB3_1의 약 0.7m 뒤에 있음
-                init_pose = [-0.7, 0.0, 0.0]
+                # 초기 추정: TB3_2가 TB3_1의 약 1.5m 뒤에 있음
+                init_pose = [-1.5, 0.0, 0.0]
                 
             T_icp_pose, fitness = icp(pts2, self.latest_scan1, init_pose)
             
@@ -242,7 +242,7 @@ class FollowerDetectorNode(Node):
             new_tf.header.frame_id = 'TB3_1/odom'
             new_tf.header.stamp = now
             new_tf.child_frame_id = 'TB3_2/odom'
-            new_tf.transform.translation.x = -0.7
+            new_tf.transform.translation.x = -1.5
             new_tf.transform.rotation.w = 1.0
             self.tf_broadcaster.sendTransform(new_tf)
 
