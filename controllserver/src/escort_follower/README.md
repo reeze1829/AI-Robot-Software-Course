@@ -18,11 +18,11 @@ source install/setup.bash
 ## Run (Example)
 ```bash
 ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
-  follow_distance:=1.5 initial_step_distance:=0.0 use_sim_time:=false
+  follow_distance:=0.5 initial_step_distance:=0.0 use_sim_time:=false
 ```
 
 ## Main Parameters (`follower` node)
-- `follow_distance` (double, default: `1.5`)
+- `follow_distance` (double, default: `0.5`)
   Rear offset from leader heading used to generate follow target.
 - `initial_step_distance` (double, default: `0.0`)
   One-time initial forward step distance toward the generated target.
@@ -59,11 +59,11 @@ source install/setup.bash
 
 ### 실행 예시
 ```bash
-ros2 launch escort_turtlebot_pkg escort_follower.launch.py follow_distance:=1.5 initial_step_distance:=0.0 use_sim_time:=false
+ros2 launch escort_turtlebot_pkg escort_follower.launch.py follow_distance:=0.5 initial_step_distance:=0.0 use_sim_time:=false
 ```
 
 ### 주요 파라미터 (`follower` 노드)
-- `follow_distance` (기본값 `1.5`): 리더 진행 방향 기준 뒤쪽 목표점 오프셋
+- `follow_distance` (기본값 `0.5`): 리더 진행 방향 기준 뒤쪽 목표점 오프셋
 - `initial_step_distance` (기본값 `0.0`): follower의 1회 초기 전진 거리
 - `publish_odom_bridge` (기본값 `true`): 내부 TF 브리지(`leader/odom -> follower/odom`) 사용 여부
 - `goal_update_distance_threshold` (기본값 `0.03`): 새 goal 전송을 위한 최소 목표 변화량

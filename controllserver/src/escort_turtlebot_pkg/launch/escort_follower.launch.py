@@ -114,7 +114,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'follow_distance',
-            default_value='1.5',
+            default_value='0.35',
             description='Target center-to-center distance from leader (meters)'
         )
     )
@@ -128,7 +128,7 @@ def generate_launch_description():
     ld.add_action(
         DeclareLaunchArgument(
             'odom_bridge_x',
-            default_value='-1.50',
+            default_value='-0.30',
             description='Static TF x offset from TB3_1/odom to TB3_2/odom'
         )
     )

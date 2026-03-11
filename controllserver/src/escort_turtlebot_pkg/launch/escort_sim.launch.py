@@ -31,7 +31,7 @@ def _launch_setup(context):
         odom_bridge_x = str(float(follower_x) - float(leader_x))
         odom_bridge_y = str(float(follower_y) - float(leader_y))
     except ValueError:
-        odom_bridge_x = '-1.50'
+        odom_bridge_x = '-0.30'
         odom_bridge_y = '0.0'
 
     pose = [[leader_x, leader_y], [follower_x, follower_y]]
@@ -159,7 +159,7 @@ def generate_launch_description():
     )
     ld.add_action(DeclareLaunchArgument('leader_x', default_value='0.0'))
     ld.add_action(DeclareLaunchArgument('leader_y', default_value='-0.5'))
-    ld.add_action(DeclareLaunchArgument('follower_x', default_value='-1.5'))
+    ld.add_action(DeclareLaunchArgument('follower_x', default_value='-0.30'))
     ld.add_action(DeclareLaunchArgument('follower_y', default_value='-0.5'))
     ld.add_action(OpaqueFunction(function=_launch_setup))
     return ld
