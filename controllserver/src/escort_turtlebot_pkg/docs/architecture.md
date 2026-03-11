@@ -11,7 +11,6 @@ The tracking system uses a hybrid method combining several ideas:
 1.  **Leader Rear-Targeting**: An idea from the `team_project` where the follower tracks a virtual target point projected behind the leader.
 2.  **Nav2 `FollowPath` Execution**: Utilizing Nav2 (`escort_follower`) on the follower robot to navigate to the continuously updated target positions.
 3.  **Local Obstacle Avoidance**: The follower (`TB3_2`) does not run a heavy global SLAM map. Instead, it relies on its local LiDAR data (`/TB3_2/scan`) to avoid dynamic obstacles using Nav2's local costmap.
-4.  **Initial Movement Adjustment**: Robots are spawned near contact. To provide space for the follower to align, the leader (`TB3_1`) automatically moves forward `0.5m` once at the beginning of the simulation.
 
 ## 2. Core Nodes
 
@@ -23,14 +22,6 @@ This is arguably the most critical node for multi-robot synchronization. It elim
 -   Uses the **ICP (Iterative Closest Point)** algorithm to continuously match these two point clouds.
 -   By finding how the two point clouds overlap, it calculates the exact relative position and orientation between the leader and follower.
 -   **TF Synchronization**: It dynamically computes and broadcasts the transform (`TF`) between `TB3_1/odom` and `TB3_2/odom`. This effectively aligns the follower's local odometry into the leader's global map frame in real-time.
-
-### `leader_initial_move_node`
-A specialized node to safely separate the leader and follower at the beginning of the run.
-
-**How it works:**
--   Waits for a specified startup delay (e.g., 2.0 seconds).
--   Publishes velocity commands (`/TB3_1/cmd_vel`) to drive the leader robot straightforward for a set distance (e.g., `0.5m`) at a safe speed.
--   This provides the necessary spatial clearance for the follower's Nav2 planner to generate an initial valid path.
 
 ## 3. TF Tree Structure
 
@@ -66,7 +57,6 @@ This complete chain allows the follower robot (`TB3_2/base_footprint`) to have a
 1.  **리더 후방 목표점 방식**: `team_project`의 아이디어로, 팔로워가 리더의 후방에 투사된 가상의 타겟을 추종하도록 합니다.
 2.  **Nav2 `FollowPath` 실행**: 팔로워 로봇(`escort_follower`)에서 Nav2를 사용하여 지속적으로 업데이트되는 타겟 위치로 주행합니다.
 3.  **로컬 장애물 회피**: 팔로워(`TB3_2`)는 무거운 글로벌 SLAM 맵을 구동하지 않습니다. 대신 자체 LiDAR 데이터(`/TB3_2/scan`)와 Nav2의 로컬 코스트맵(local costmap)을 활용하여 동적 장애물을 회피합니다.
-4.  **초기 위치 조정**: 로봇들은 간격이 좁은 상태로 스폰됩니다. 팔로워가 자리를 잡을 공간을 확보하기 위해, 리더(`TB3_1`)는 시뮬레이션 시작 시 자동으로 전진(`0.5m`)을 1회 수행합니다.
 
 ## 2. 핵심 노드 (Core Nodes)
 
@@ -78,14 +68,6 @@ This complete chain allows the follower robot (`TB3_2/base_footprint`) to have a
 -   **ICP (Iterative Closest Point)** 알고리즘을 사용해 두 점군(Point Cloud) 데이터를 지속적으로 매칭합니다.
 -   두 점군 데이터가 겹쳐지는 방식을 찾아내어, 리더와 팔로워 간의 정확한 상대 위치와 방향을 계산해 냅니다.
 -   **TF 동기화**: `TB3_1/odom`과 `TB3_2/odom` 사이의 변환 행렬(`TF`)을 실시간으로 계산하여 방송(Broadcast)합니다. 이를 통해 팔로워의 로컬 오도메트리를 리더의 글로벌 맵 프레임에 맞춰 실시간으로 정렬시킵니다.
-
-### `leader_initial_move_node`
-시작 시 리더와 팔로워 사이의 안전한 거리를 확보하기 위한 특수 목적 노드입니다.
-
-**동작 원리:**
--   지정된 초기 지연 시간(예: 2.0초) 동안 대기합니다.
--   속도 제어 명령(`/TB3_1/cmd_vel`)을 발행하여 리더 로봇이 지정된 속도로 직선 전진(예: `0.5m`)하도록 합니다.
--   이를 통해 팔로워의 Nav2 플래너가 초기 유효한 경로를 생성할 수 있는 공간을 제공합니다.
 
 ## 3. TF 트리 (TF Tree Structure)
 

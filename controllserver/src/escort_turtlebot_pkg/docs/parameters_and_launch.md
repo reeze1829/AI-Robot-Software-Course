@@ -14,14 +14,6 @@ Launch files in `launch/` dictate how the simulation starts and orchestrates the
     The absolute starting coordinates (X, Y) for both robots in the Gazebo `map` frame.
 -   **`odom_bridge_x`**, **`odom_bridge_y`**
     **(Only used if dynamic ICP matching is disabled)** Provides a static, hardcoded TF offset from `TB3_1/odom` to `TB3_2/odom`. The launch script calculates this dynamically using the spawn positions if the ICP node is not utilized.
--   **`leader_initial_move_enabled`** (default: `false` in core, overridden to `true` conditionally)
-    Enables or disables the `leader_initial_move_node`.
--   **`leader_initial_move`** (default: `0.5`)
-    The distance in meters the leader should autonomously drive forward at startup.
--   **`leader_initial_move_speed`** (default: `0.10`)
-    The linear speed (m/s) for the initial movement.
--   **`leader_initial_move_startup_delay`** (default: `2.0`)
-    Seconds to wait after launch before executing the initial move. This ensures Nav2 and SLAM are fully initialized before the robot moves.
 
 ## 2. Nav2 Configuration (`param/escort_controll_server1.yaml`)
 
@@ -75,14 +67,6 @@ The Follower (`TB3_2`) does not maintain a global map. It only uses a local roll
     Gazebo `map` 프레임 내에서 두 로봇이 스폰될 절대적 시작 좌표(X, Y)입니다.
 -   **`odom_bridge_x`**, **`odom_bridge_y`**
     **(동적 ICP 매칭이 비활성화된 경우에만 사용)** `TB3_1/odom`에서 `TB3_2/odom`로의 정적(고정된) TF 오프셋을 제공합니다. ICP 노드를 사용하지 않는 경우, 런치 스크립트가 로봇의 스폰 좌표를 바탕으로 이 값을 자동으로 계산합니다.
--   **`leader_initial_move_enabled`** (기본값: core에서는 `false`지만, 조건에 따라 `true`로 덮어씌워짐)
-    `leader_initial_move_node`의 실행 여부를 설정합니다.
--   **`leader_initial_move`** (기본값: `0.5`)
-    시작 시 리더 로봇이 자동으로 전진할 거리(미터)입니다.
--   **`leader_initial_move_speed`** (기본값: `0.10`)
-    초기 이동 시 사용할 선속도(m/s)입니다.
--   **`leader_initial_move_startup_delay`** (기본값: `2.0`)
-    런치 후 초기 이동을 시작하기 전까지 대기할 시간(초)입니다. Nav2 및 SLAM 프로세스가 완전히 초기화된 후 움직일 수 있도록 보장합니다.
 
 ## 2. Nav2 설정 (`param/escort_controll_server1.yaml`)
 

@@ -8,7 +8,6 @@ Python launch/bridge integration package for escort simulation and runtime orche
 - Runs a hybrid follower behavior:
   - Leader rear-target idea from `team_project`
   - Nav2 `FollowPath` execution from `escort_follower`
-  - Start from near-contact placement, then leader moves forward `0.5m` once
 - Integrates SLAM for the Leader robot:
   - Leader (`TB3_1`) runs `slam_toolbox` to generate a map of the environment.
   - Follower (`TB3_2`) uses LiDAR solely for local obstacle avoidance via Nav2 local costmap.
@@ -80,8 +79,6 @@ but keep remapping to `/TB3_1/cmd_vel`.
   Leader spawn pose.
 - `follower_x`, `follower_y` (double)
   Follower spawn pose.
-- `leader_initial_move` (double, default: `0.5`)
-  One-time initial forward distance for leader.
 
 ## 한국어 안내
 
@@ -93,7 +90,6 @@ but keep remapping to `/TB3_1/cmd_vel`.
 - 하이브리드 추종 방식 사용
   - `team_project`의 리더 후방 목표점 아이디어
   - `escort_follower`의 Nav2 `FollowPath` 추종 실행
-  - 초기 근접 배치 후 리더가 시작 시 `0.5m` 1회 전진
 - 리더 로봇 중심의 SLAM 통합
   - 리더 로봇(`TB3_1`)은 `slam_toolbox`를 실행하여 맵 생성
   - 팔로워 로봇(`TB3_2`)은 무거운 SLAM 대신 자체 LiDAR 데이터를 활용한 근거리 역동적 장애물 회피(Local Costmap)만 수행
@@ -162,4 +158,3 @@ ros2 run turtlebot3_teleop teleop_keyboard --ros-args -r cmd_vel:=/TB3_1/cmd_vel
 - `use_sim_time` (기본값 `true`): 시뮬레이션 시간 사용 여부
 - `leader_x`, `leader_y`: leader 스폰 위치
 - `follower_x`, `follower_y`: follower 스폰 위치
-- `leader_initial_move` (기본값 `0.5`): 리더 시작 시 1회 전진 거리
