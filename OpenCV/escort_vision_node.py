@@ -35,7 +35,7 @@ class EscortGestureMaskNode(Node):
         # -----------------------------
         # YOLO mask model
         # -----------------------------
-        self.model = YOLO("/home/robot/robot_ws/src/escort_robot/best.pt")
+        self.model = YOLO("/home/ubuntu/robot_ws/src/escort_robot/best.pt")
 
         self.colors = {
             "with_mask": (0,255,0),
@@ -150,7 +150,7 @@ class EscortGestureMaskNode(Node):
         # -------------------------------------------------
         if not self.mask_verified:
 
-            results = self.model(frame)
+            results = self.model(frame, conf=0.1)
 
             for box in results[0].boxes:
 
