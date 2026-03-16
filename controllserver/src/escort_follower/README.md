@@ -7,6 +7,7 @@ C++ package for multi-TurtleBot follower control using TF-relative target genera
 - Computes leader pose in follower frame from TF.
 - Builds short 2-point path and sends `FollowPath` goals.
 - Uses a hybrid target rule: target point is generated behind leader heading.
+- **NEW: Ultrasonic Emergency Avoidance**: Subscribes to `/ultrasonic_distance` and triggers emergency reverse if an obstacle is within 10cm.
 
 ## Build
 ```bash
@@ -38,8 +39,10 @@ ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
 ## Notes
 - TF lookup failures are skipped safely (no stale goal resend on TF miss).
 - Goal updates are rate-limited and change-filtered to reduce Nav2 action spam.
+- **Emergency Mode**: When ultrasonic distance <= 10.0cm, active Nav2 goals are canceled and the robot publishes a reverse command (`-0.07m/s`) directly to `/cmd_vel`.
 - Distance sensing/calculation reference:
   - `docs/distance_measurement_reference.md`
+  - `docs/ultrasonic_avoidance.md` (Design of emergency reverse)
 
 ## 한국어 안내
 
@@ -49,6 +52,7 @@ ros2 launch escort_turtlebot_pkg escort_follower.launch.py \
 - `TB3_2 ... TB3_n` follower 노드 실행
 - follower 기준 leader 상대 위치 계산
 - 2개 포인트 경로 생성 후 `FollowPath` goal 전송
+- **추가됨: 초음파 긴급 회피**: `/ultrasonic_distance` 토픽을 통해 10cm 이내 장애물 감지 시 즉시 긴급 후진을 수행합니다.
 
 ### 빌드
 ```bash
@@ -73,5 +77,7 @@ ros2 launch escort_turtlebot_pkg escort_follower.launch.py follow_distance:=0.5 
 ### 참고
 - TF 조회 실패 시 goal 전송을 건너뛰도록 처리되어 있습니다.
 - goal 전송은 변화량/주기 필터가 적용되어 액션 과전송을 줄입니다.
+- **긴급 모드**: 초음파 거리가 10cm 이하인 경우, 실행 중인 Nav2 목표를 취소하고 `/cmd_vel`로 직접 후진 명령(-0.07m/s)을 전송합니다.
 - 거리 인식/계산 참고 문서:
   - `docs/distance_measurement_reference.md`
+  - `docs/ultrasonic_avoidance.md` (긴급 회피 로직 설계)

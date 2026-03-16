@@ -34,6 +34,8 @@
 #include <nav2_msgs/action/follow_path.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
+#include <std_msgs/msg/float32.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 
@@ -46,6 +48,7 @@ private:
   void tf_publisher();
   void send_path();
   bool get_target_pose();
+  void sonar_callback(const std_msgs::msg::Float32::SharedPtr msg);
 
   geometry_msgs::msg::TransformStamped leader_pose_in_tracking_frame_;
   geometry_msgs::msg::TransformStamped follower_pose_in_tracking_frame_;
@@ -58,6 +61,8 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr ultrasonic_sub_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
 
   std::string leader_name_;
   std::string follower_name_;
@@ -67,8 +72,10 @@ private:
   bool has_prior_target_pose_;
   bool awaiting_goal_response_;
   bool applied_initial_step_;
+  bool is_emergency_;
   double follow_distance_;
   double initial_step_distance_;
+  double sonar_dist_;
   double goal_update_distance_threshold_;
   double goal_update_min_period_sec_;
   rclcpp::Time last_goal_sent_time_;
