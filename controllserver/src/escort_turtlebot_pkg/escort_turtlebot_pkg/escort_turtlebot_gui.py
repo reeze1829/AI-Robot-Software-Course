@@ -1,7 +1,15 @@
 import os
-# os.environ["QT_QPA_PLATFORM"] = "xcb"
-
 import sys
+
+# Workaround for Qt conflict: Load system Qt plugins and import PyQt5 BEFORE cv2
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/lib/x86_64-linux-gnu/qt5/plugins/"
+os.environ["QT_DEBUG_PLUGINS"] = "1"
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+
+import cv2
 import rclpy
 
 from rclpy.node import Node
@@ -10,12 +18,6 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 from cv_bridge import CvBridge
-
-import cv2
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
 
 
 # -------------------------------------------------
