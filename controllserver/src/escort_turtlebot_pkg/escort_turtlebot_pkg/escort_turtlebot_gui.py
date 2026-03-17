@@ -11,6 +11,7 @@ from PyQt5.QtCore import *
 
 import cv2
 import rclpy
+import numpy as np
 
 from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
