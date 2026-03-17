@@ -61,7 +61,7 @@ class FollowerNode(Node):
             return
 
         # 2순위: 리더 추적 알고리즘
-        if self.current_target:
+        elif self.current_target:
             tx, ty = self.current_target
             dx = tx - self.curr_x
             dy = ty - self.curr_y

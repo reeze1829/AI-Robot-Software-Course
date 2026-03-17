@@ -6,6 +6,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
+from launch.actions import ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 
@@ -44,4 +45,11 @@ def generate_launch_description():
     )
     ld.add_action(core_launch)
     ld.add_action(slam_launch)
+
+    sonar_process = ExecuteProcess(
+        cmd=['ssh', 'penguin@192.168.0.201', 'bash', '-c', '"source /opt/ros/humble/setup.bash && python3 ~/sonar_pub.py"'],
+        output='screen'
+    )
+    ld.add_action(sonar_process)
+
     return ld
