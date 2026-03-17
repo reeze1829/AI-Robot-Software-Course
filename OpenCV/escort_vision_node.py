@@ -1,3 +1,4 @@
+import os
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
@@ -35,7 +36,10 @@ class EscortGestureMaskNode(Node):
         # -----------------------------
         # YOLO mask model
         # -----------------------------
-        self.model = YOLO("/home/ubuntu/robot_ws/src/escort_robot/best.pt")
+        self.declare_parameter('model_path', os.path.join(os.path.expanduser('~'), 'escort_ws/team_project/best.pt'))
+        model_path = self.get_parameter('model_path').get_parameter_value().string_value
+        self.get_logger().info(f"Loading YOLO model from: {model_path}")
+        self.model = YOLO(model_path)
 
         self.colors = {
             "with_mask": (0,255,0),
