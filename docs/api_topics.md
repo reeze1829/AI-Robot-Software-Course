@@ -25,6 +25,12 @@ This document provides a centralized reference for the ROS 2 topics, actions, an
   - LiDAR data used for ICP-based TF alignment and local costmaps.
 - **`/TB3_1/cmd_vel`** (`geometry_msgs/Twist`)
   - Velocity commands for the leader robot.
+- **`/camera/image_raw/compressed`** (`sensor_msgs/CompressedImage`)
+  - Input image stream for the vision node.
+- **`/gesture_state`** (`std_msgs/String`)
+  - Publishes the recognized gesture (e.g., "FORWARD", "STOP").
+- **`/mask_state`** (`std_msgs/String`)
+  - Publishes the mask detection result (e.g., "with_mask").
 
 ## 3. Actions
 
