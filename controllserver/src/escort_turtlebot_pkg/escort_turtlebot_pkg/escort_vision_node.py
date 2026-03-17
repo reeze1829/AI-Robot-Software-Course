@@ -266,8 +266,8 @@ class EscortGestureMaskNode(Node):
                 2
             )
 
-        #cv2.imshow("Escort Turtlebot Vision",frame)
-        #cv2.waitKey(1)
+        cv2.imshow("Escort Turtlebot Vision",frame)
+        cv2.waitKey(1)
 
 
 # -------------------------------------------------
