@@ -25,10 +25,12 @@ setup(
             'pytest',
         ],
     },
-    scripts=[
-        'scripts/escort_vision_node',
-        'scripts/escort_turtlebot_gui',
-        'scripts/follower_detector_node',
-        'scripts/leader_initial_move_node',
-    ],
+    entry_points={
+        'console_scripts': [
+            'escort_vision_node = escort_turtlebot_pkg.escort_vision_node:main',
+            'escort_turtlebot_gui = escort_turtlebot_pkg.escort_turtlebot_gui:main',
+            'follower_detector_node = escort_turtlebot_pkg.follower_detector_node:main',
+            'leader_initial_move_node = escort_turtlebot_pkg.leader_initial_move_node:main',
+        ],
+    },
 )
