@@ -68,10 +68,21 @@ class EscortGuiNode(Node):
 
 
     def image_callback(self, msg):
+        if not msg or not msg.data:
+            return
 
-        frame = self.bridge.compressed_imgmsg_to_cv2(msg,'bgr8')
+        try:
+            # Decode compressed image
+            np_arr = np.frombuffer(msg.data, np.uint8)
+            frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
-        self.gui.update_image(frame)
+            if frame is None:
+                return
+
+            self.gui.update_image(frame)
+        except Exception as e:
+            self.get_logger().error(f"Image processing error in GUI: {e}")
+            return
 
 
     def gesture_callback(self,msg):
@@ -219,7 +230,7 @@ class EscortGUI(QWidget):
             h,
             ch*w,
             QImage.Format_RGB888
-        )
+        ).copy() # Make a copy to prevent memory corruption when 'rgb' is collected
 
         self.image_label.setPixmap(QPixmap.fromImage(qt_image))
 
