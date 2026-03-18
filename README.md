@@ -64,3 +64,16 @@ cd ~/escort_ws
 colcon build
 source install/setup.bash
 ```
+
+## 실행 방법
+
+다음 명령어를 사용하여 전체 시스템을 실행하거나, 실제 로봇에서 실행할 수 있습니다.
+
+```bash
+# 전체 시스템 (시뮬레이션 및 비전, GUI 포함)
+ros2 launch escort_turtlebot_pkg escort_full_system.launch.py
+
+# 실제 로봇에서 실행 (실제 로봇에 연결된 경우)
+ros2 launch escort_turtlebot_pkg escort_real.launch.py
+```
+
