@@ -1,38 +1,41 @@
 import os
+os.environ["QT_QPA_PLATFORM"] = "xcb"
+
 import sys
-
-# Workaround for Qt conflict: Load system Qt plugins and import PyQt5 BEFORE cv2
-os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = "/usr/lib/x86_64-linux-gnu/qt5/plugins/"
-os.environ["QT_DEBUG_PLUGINS"] = "1"
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-
 import cv2
-import rclpy
 import numpy as np
+import mediapipe as mp
 
+import rclpy
 from rclpy.node import Node
+
 from sensor_msgs.msg import CompressedImage
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 from cv_bridge import CvBridge
+from ultralytics import YOLO
+
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import *
 
 
 # -------------------------------------------------
-# ROS2 Node
+# YOLO + Gesture Node
 # -------------------------------------------------
+class EscortGestureMaskNode(Node):
 
-class EscortGuiNode(Node):
+    def __init__(self):
+        super().__init__('escort_gesture_mask')
 
-    def __init__(self, gui):
-
-        super().__init__('escort_gui')
-
-        self.gui = gui
+        self.frame_count = 0
         self.bridge = CvBridge()
+
+        # publishers
+        self.gesture_pub = self.create_publisher(String, '/gesture_state', 10)
+        self.mask_pub = self.create_publisher(String, '/mask_state', 10)
+        self.cmd_pub = self.create_publisher(Twist, '/TB3_1/cmd_vel', 10)
 
         # camera subscriber
         self.create_subscription(
@@ -49,75 +52,167 @@ class EscortGuiNode(Node):
             self.gesture_callback,
             10
         )
-        # mask subscriber
-        self.create_subscription(
-            String,
-            '/mask_state',
-            self.mask_callback,
-            10
+
+        # YOLO
+        self.declare_parameter('model_path', '/home/penguin/escort_ws/yolo_model/last_openvino_model')
+        model_path = self.get_parameter('model_path').get_parameter_value().string_value
+        self.get_logger().info(f"Loading YOLO model from: {model_path}")
+        self.model = YOLO(model_path)
+
+        # mediapipe
+        self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands(
+            max_num_hands=1,
+            min_detection_confidence=0.7,
+            min_tracking_confidence=0.7
         )
 
-        # cmd_vel publisher
-        self.cmd_pub = self.create_publisher(Twist, '/TB3_1/cmd_vel', 10)
+        self.mask_verified = False
 
-    # -----------------------------
-    # mask callback
-    # -----------------------------
-    def mask_callback(self, msg):
-        mask_name = msg.data
-        self.gui.update_mask_status(mask_name)
+        self.get_logger().info("Escort System Started")
 
+    # -------------------------
+    # finger count
+    # -------------------------
+    def count_fingers(self, hand):
 
+        lm = hand.landmark
+        fingers = 0
+
+        finger_sets = [
+            (2, 3, 4),
+            (5, 6, 8),
+            (9, 10, 12),
+            (13, 14, 16),
+            (17, 18, 20)
+        ]
+
+        for a, b, c in finger_sets:
+            A = np.array([lm[a].x, lm[a].y, lm[a].z])
+            B = np.array([lm[b].x, lm[b].y, lm[b].z])
+            C = np.array([lm[c].x, lm[c].y, lm[c].z])
+
+            BA = A - B
+            BC = C - B
+
+            cosine = np.dot(BA, BC) / (np.linalg.norm(BA) * np.linalg.norm(BC))
+            angle = np.degrees(np.arccos(np.clip(cosine, -1, 1)))
+
+            if angle > 160:
+                fingers += 1
+
+        return fingers
+
+    # -------------------------
+    # gesture classify
+    # -------------------------
+    def classify_gesture(self, f):
+
+        if f == 0:
+            return "STOP"
+        if f == 5:
+            return "FORWARD"
+        if f == 1:
+            return "LEFT"
+        if f == 2:
+            return "RIGHT"
+
+        return "STOP"
+
+    # -------------------------
+    # camera callback
+    # -------------------------
     def image_callback(self, msg):
-        if not msg or not msg.data:
-            return
 
-        try:
-            # Decode compressed image
-            np_arr = np.frombuffer(msg.data, np.uint8)
-            frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        frame = self.bridge.compressed_imgmsg_to_cv2(msg, 'bgr8')
+        frame = cv2.resize(frame, (320, 320))
+        frame = cv2.flip(frame, 1)
 
-            if frame is None:
-                return
+        # YOLO mask detection
+        if not self.mask_verified:
 
+            results = self.model.predict(frame, imgsz=320, agnostic_nms=True, verbose=False)
+
+            detected = set()
+
+            for box in results[0].boxes:
+
+                cls_id = int(box.cls.cpu().numpy()[0])
+                name = self.model.names[cls_id]
+
+                detected.add(name)
+
+                mask_msg = String()
+                mask_msg.data = name
+                self.mask_pub.publish(mask_msg)
+
+            # 디버그 출력
+            # print("Detected:", detected)
+
+            mask = False
+            phone = False
+            hand = False
+
+            for obj in detected:
+
+                if "Mask" in obj:
+                    mask = True
+
+                if "Phone" in obj:
+                    phone = True
+
+                if "Hand" in obj:
+                    hand = True
+
+            if mask and phone and hand:
+                self.mask_verified = True
+                self.get_logger().info("VIP Verified → YOLO OFF")
+
+        # Gesture detection
+        if self.mask_verified:
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            result = self.hands.process(rgb)
+
+            if result.multi_hand_landmarks:
+
+                for hand in result.multi_hand_landmarks:
+
+                    fingers = self.count_fingers(hand)
+                    gesture = self.classify_gesture(fingers)
+
+                    msg = String()
+                    msg.data = gesture
+                    self.gesture_pub.publish(msg)
+
+        # GUI image update
+        if hasattr(self, "gui"):
             self.gui.update_image(frame)
-        except Exception as e:
-            self.get_logger().error(f"Image processing error in GUI: {e}")
-            return
 
-
-    def gesture_callback(self,msg):
+    # -------------------------
+    # gesture callback
+    # -------------------------
+    def gesture_callback(self, msg):
 
         gesture = msg.data
+
+        if hasattr(self, "gui"):
+            self.gui.update_gesture(gesture)
 
         twist = Twist()
 
         if gesture == "FORWARD":
             twist.linear.x = 0.05
-            self.gui.update_gesture("Moving Forward")
 
         elif gesture == "LEFT":
             twist.angular.z = 0.3
-            self.gui.update_gesture("Turning Left")
 
         elif gesture == "RIGHT":
             twist.angular.z = -0.3
-            self.gui.update_gesture("Turning Right")
 
         elif gesture == "STOP":
             twist.linear.x = 0.0
             twist.angular.z = 0.0
-            self.gui.update_gesture("Stopped")
-
-        self.cmd_pub.publish(twist)
-
-
-    def move_robot(self, linear, angular):
-
-        twist = Twist()
-
-        twist.linear.x = linear
-        twist.angular.z = angular
 
         self.cmd_pub.publish(twist)
 
@@ -125,37 +220,31 @@ class EscortGuiNode(Node):
 # -------------------------------------------------
 # GUI
 # -------------------------------------------------
-
 class EscortGUI(QWidget):
 
     def __init__(self):
-
         super().__init__()
 
         self.setWindowTitle("Escort Turtlebot Control Panel")
-        self.setGeometry(100,100,820,650)
+        self.setGeometry(100, 100, 820, 650)
 
         self.current_gesture = "NONE"
+        self.current_status = "Unknown"
 
-        # camera view
         self.image_label = QLabel()
-        self.image_label.setFixedSize(640,480)
+        self.image_label.setFixedSize(640, 480)
 
-        # gesture label
         self.gesture_label = QLabel("Gesture : NONE")
-        self.gesture_label.setFont(QFont("Arial",18))
+        self.gesture_label.setFont(QFont("Arial", 18))
 
-        # robot status → 이제 mask 상태만
-        self.status_label = QLabel("Mask Status : Unknown")
-        self.status_label.setFont(QFont("Arial",14))
+        self.status_label = QLabel("Status : Unknown")
+        self.status_label.setFont(QFont("Arial", 14))
 
-        # buttons
         self.btn_forward = QPushButton("Forward")
         self.btn_left = QPushButton("Left")
         self.btn_right = QPushButton("Right")
         self.btn_stop = QPushButton("STOP")
 
-        # layout
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.btn_left)
         btn_layout.addWidget(self.btn_forward)
@@ -163,7 +252,6 @@ class EscortGUI(QWidget):
         btn_layout.addWidget(self.btn_stop)
 
         layout = QVBoxLayout()
-
         layout.addWidget(self.image_label)
         layout.addWidget(self.gesture_label)
         layout.addWidget(self.status_label)
@@ -171,88 +259,59 @@ class EscortGUI(QWidget):
 
         self.setLayout(layout)
 
-
     def set_node(self, node):
 
         self.node = node
+        node.gui = self
 
-        self.btn_forward.clicked.connect(lambda: self.node.move_robot(0.05,0.0))
-        self.btn_left.clicked.connect(lambda: self.node.move_robot(0.0,0.3))
-        self.btn_right.clicked.connect(lambda: self.node.move_robot(0.0,-0.3))
-        self.btn_stop.clicked.connect(lambda: self.node.move_robot(0.0,0.0))
+        self.btn_forward.clicked.connect(
+            lambda: self.node.cmd_pub.publish(Twist())
+        )
 
+        self.btn_stop.clicked.connect(
+            lambda: self.node.cmd_pub.publish(Twist())
+        )
 
     def update_image(self, frame):
 
-        frame = cv2.resize(frame,(640,480))
+        frame = cv2.resize(frame, (640, 480))
 
-        # -----------------------------
-        # 화면에 Gesture 표시
-        # -----------------------------
+        color_map = {
+            "FORWARD": (0, 255, 0),
+            "LEFT": (255, 0, 0),
+            "RIGHT": (0, 0, 255),
+            "STOP": (0, 255, 255),
+            "NONE": (0, 255, 255)
+        }
 
-        if self.current_gesture == "FORWARD":
-            color = (0,255,0)
-
-        elif self.current_gesture == "LEFT":
-            color = (255,0,0)
-
-        elif self.current_gesture == "RIGHT":
-            color = (0,0,255)
-
-        else:
-            color = (0,255,255)
+        color = color_map.get(self.current_gesture, (0, 255, 255))
 
         cv2.putText(
             frame,
             f"Gesture : {self.current_gesture}",
-            (20,40),
+            (20, 40),
             cv2.FONT_HERSHEY_SIMPLEX,
             1,
             color,
             3
         )
 
-        # 프레임 테두리 표시
-        cv2.rectangle(
-            frame,
-            (0,0),
-            (639,479),
-            color,
-            4
-        )
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        rgb = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb.shape
+        img = QImage(rgb.data, w, h, ch * w, QImage.Format_RGB888)
 
-        h,w,ch = rgb.shape
+        self.image_label.setPixmap(QPixmap.fromImage(img))
 
-        qt_image = QImage(
-            rgb.data,
-            w,
-            h,
-            ch*w,
-            QImage.Format_RGB888
-        ).copy() # Make a copy to prevent memory corruption when 'rgb' is collected
+    def update_gesture(self, g):
 
-        self.image_label.setPixmap(QPixmap.fromImage(qt_image))
+        self.current_gesture = g
+        self.gesture_label.setText(f"Gesture : {g}")
 
 
-    def update_gesture(self, gesture):
-
-        self.current_gesture = gesture
-
-        self.gesture_label.setText(f"Gesture : {gesture}")
-
-    def update_mask_status(self, mask_name):
-        if mask_name == "with_mask":
-            self.status_label.setText("Mask Status : Verified")
-        elif mask_name == "without_mask":
-            self.status_label.setText("Mask Status : Not Wearing")
-        else:
-            self.status_label.setText("Mask Status : Unknown")
 # -------------------------------------------------
 # main
 # -------------------------------------------------
-
 def main():
 
     rclpy.init()
@@ -260,18 +319,20 @@ def main():
     app = QApplication(sys.argv)
 
     gui = EscortGUI()
-
-    node = EscortGuiNode(gui)
+    node = EscortGestureMaskNode()
 
     gui.set_node(node)
-
     gui.show()
 
     timer = QTimer()
-    timer.timeout.connect(lambda: rclpy.spin_once(node, timeout_sec=0))
+    timer.timeout.connect(lambda: rclpy.spin_once(node, timeout_sec=0) if rclpy.ok() else None)
     timer.start(10)
 
-    sys.exit(app.exec_())
+    try:
+        sys.exit(app.exec_())
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":
