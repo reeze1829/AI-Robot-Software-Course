@@ -111,6 +111,7 @@ class EscortVisionNode(Node):
 
         frame = self.bridge.compressed_imgmsg_to_cv2(msg, 'bgr8')
         frame = cv2.resize(frame, (320, 320))
+        frame = cv2.flip(frame, 1)
 
         self.frame_count += 1
 
