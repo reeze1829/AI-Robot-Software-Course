@@ -9,18 +9,23 @@ from ament_index_python.packages import get_package_share_directory
 from nav_msgs.msg import Odometry
 import math
 from std_srvs.srv import Empty
+from sensor_msgs.msg import LaserScan
 
 class MainNode(Node, QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__('main_node')
         QtWidgets.QMainWindow.__init__(self)
 
-        package_path = get_package_share_directory('ros2_personal_project')
-        main_ui = os.path.join(package_path, 'ui', 'main_window.ui')
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        package_root = os.path.dirname(current_dir)
+        base_ui_path = os.path.join(package_root, 'ui')
+
+        main_ui = os.path.join(base_ui_path, 'main_window.ui')
+        teleop_ui = os.path.join(base_ui_path, 'teleop_panel.ui')
+
         uic.loadUi(main_ui, self)
 
         self.teleop_window = QtWidgets.QWidget()
-        teleop_ui = os.path.join(package_path, 'ui', 'teleop_panel.ui')
         uic.loadUi(teleop_ui, self.teleop_window)
 
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -57,6 +62,9 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.ros_spin)
         self.timer.start(10)
 
+        self.scan_sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
+        self.min_front_dist = 999.9
+
     def open_teleop(self):
         self.teleop_window.show()
 
@@ -91,6 +99,17 @@ class MainNode(Node, QtWidgets.QMainWindow):
         if self.is_moving_to_goal:
             self.go_to_goal_logic()
 
+    def scan_callback(self, msg):
+        front_ranges = msg.ranges[0:45] + msg.ranges[315:359]
+
+        valid_ranges = [d for d in front_ranges if d > 0.05]
+        if valid_ranges:
+            self.min_front_dist = min(valid_ranges)
+
+        if (self.is_moving_to_goal or self.is_action_running) and self.min_front_dist < 0.1:
+            self.emergency_stop()
+            self.text_log.append("<b style='color:red;'>[위험] 장애물 감지로 긴급 정지!</b>")
+
     def go_to_goal_logic(self):
         dx, dy = self.target_x - self.curr_x, self.target_y - self.curr_y
         dist = math.sqrt(dx**2 + dy**2)
@@ -123,7 +142,7 @@ class MainNode(Node, QtWidgets.QMainWindow):
         self.text_log.append(f"이동: ({self.target_x}, {self.target_y})")
 
     def start_draw_square(self):
-        self.square_waypoints = [(1.0, 0.0), (1.0, 1.0), (0.0, 1.0), (0.0, 0.0)]
+        self.square_waypoints = [(0.4, 0.0), (0.4, 0.4), (0.0, 0.4), (0.0, 0.0)]
         self.current_waypoint_idx = 0
         self.is_drawing_square = True
         self.target_x, self.target_y = self.square_waypoints[0]
