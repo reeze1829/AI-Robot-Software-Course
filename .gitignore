@@ -1,0 +1,38 @@
+.vscode/
+
+# ROS2 / colcon build artifacts
+build/
+install/
+log/
+
+# Local temp files
+tmp/
+
+# Python cache
+__pycache__/
+*.py[cod]
+# Python caches and artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+*.egg
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE / editor local files
+.idea/
+
+# Nested colcon artifacts
+controllserver/build/
+controllserver/install/
+controllserver/log/
+
+# Temporary archive workspace
+tmp/
+.aiexclude
